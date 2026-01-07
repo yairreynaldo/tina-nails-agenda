@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda Tina Nails 💅</title>
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ff85a2; /* Rosa Tina Nails */
+            --secondary: #fce4ec;
+            --definic: #9e9e9e; /* Gris para "A definir" */
+            --text: #333;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #fafafa;
+            margin: 0;
+            padding: 10px;
+            color: var(--text);
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .header h1 {
+            margin: 0;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        #calendar {
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* Estilos de los turnos */
+        .fc-event {
+            cursor: pointer;
+            border: none !important;
+            padding: 2px 5px;
+            transition: transform 0.2s;
+        }
+
+        .fc-event:hover {
+            transform: scale(1.02);
+        }
+
+        /* Modal para detalles */
+        #eventModal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 25px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .modal-content h3 { color: var(--primary); margin-top: 0; }
+
+        .btn-wsp {
+            background-color: #25D366;
+            color: white;
+            text-decoration: none;
+            padding: 12px 20px;
+            border-radius: 50px;
+            display: inline-flex;
+            align-items: center;
+            margin-top: 15px;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: #eee;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
+        /* Indicador de carga */
+        #loading {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Agenda Tina Nails 💅</h1>
+    </div>
+
+    <div id="loading">Cargando...</div>
+    <div id="calendar"></div>
+
+    <div id="eventModal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Detalle del Turno</h3>
+            <p id="modalInfo"></p>
+            <hr>
+            <a href="#" id="wspLink" target="_blank" class="btn-wsp">
+                Enviar WhatsApp 📱
+            </a>
+            <br>
+            <button onclick="closeModal()" class="close-btn">Cerrar</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarEl = document.getElementById('calendar');
+            const loadingEl = document.getElementById('loading');
+            const webhookUrl = 'https://prueba-turnos-n8n.feygzx.easypanel.host/webhook/aa8029ab-3f39-497e-944b-b79f7456eb59';
+
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                locale: 'es',
+                slotMinTime: '10:00:00',
+                slotMaxTime: '21:00:00',
+                allDaySlot: false,
+                slotDuration: '00:30:00',
+                slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+                
+                events: function(fetchInfo, successCallback, failureCallback) {
+                    loadingEl.style.display = 'block';
+                    fetch(webhookUrl)
+                        .then(response => response.json())
+                        .then(data => {
+                            const events = data.map(turno => {
+                                // Lógica de colores: "A definir" en gris, resto en Rosa
+                                const esADefinir = turno.servicio.toLowerCase().includes('definir');
+                                return {
+                                    id: turno.id,
+                                    title: `${turno.cliente_nombre} - ${turno.servicio}`,
+                                    start: turno.fecha_inicio,
+                                    end: turno.fecha_fin,
+                                    backgroundColor: esADefinir ? '#9e9e9e' : '#ff85a2',
+                                    extendedProps: {
+                                        telefono: turno.cliente_telefono,
+                                        servicio: turno.servicio,
+                                        cliente: turno.cliente_nombre
+                                    }
+                                };
+                            });
+                            loadingEl.style.display = 'none';
+                            successCallback(events);
+                        })
+                        .catch(err => {
+                            console.error('Error cargando agenda:', err);
+                            loadingEl.style.display = 'none';
+                        });
+                },
+
+                eventClick: function(info) {
+                    const props = info.event.extendedProps;
+                    const cleanPhone = props.telefono.replace(/\D/g, ''); // Limpiar para WhatsApp
+                    
+                    document.getElementById('modalTitle').innerText = props.cliente;
+                    document.getElementById('modalInfo').innerHTML = `
+                        <b>Servicio:</b> ${props.servicio}<br>
+                        <b>Horario:</b> ${info.event.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}hs<br>
+                        <b>Tel:</b> ${props.telefono}
+                    `;
+                    document.getElementById('wspLink').href = `https://wa.me/${cleanPhone}`;
+                    document.getElementById('eventModal').style.display = 'block';
+                }
+            });
+
+            calendar.render();
+        });
+
+        function closeModal() {
+            document.getElementById('eventModal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
