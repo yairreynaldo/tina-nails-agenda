@@ -163,18 +163,25 @@
     fetch(webhookUrl)
         .then(response => response.json())
         .then(data => {
-            // Validamos que 'data' sea un array para evitar errores
-            if (!Array.isArray(data)) {
-                console.error("Los datos recibidos no son un array:", data);
-                return successCallback([]);
+            console.log("Datos recibidos de n8n:", data); // Esto nos dirá la verdad en el Console
+
+            // --- ESCUDO DE COMPATIBILIDAD ---
+            // Si n8n manda el array adentro de una propiedad (ej: data.response o data.items)
+            let turnosArr = [];
+            if (Array.isArray(data)) {
+                turnosArr = data;
+            } else if (data.response && Array.isArray(data.response)) {
+                turnosArr = data.response;
+            } else if (typeof data === 'object' && data !== null) {
+                // Si es un solo objeto (un solo turno), lo convertimos en array
+                turnosArr = [data];
             }
 
-            const events = data.map(turno => {
-                // 1. Limpiamos el formato de fecha (Cambiamos espacio por T)
+            const events = turnosArr.map(turno => {
+                // Limpieza de fechas para FullCalendar
                 const startStr = turno.fecha_inicio ? String(turno.fecha_inicio).replace(' ', 'T') : null;
                 const endStr = turno.fecha_fin ? String(turno.fecha_fin).replace(' ', 'T') : null;
 
-                // 2. Seguridad para el campo servicio y nombre
                 const serv = turno.servicio || 'A definir';
                 const nombre = turno.cliente_nombre || 'Sin nombre';
                 const esADefinir = serv.toLowerCase().includes('definir');
@@ -184,20 +191,20 @@
                     title: `${nombre} - ${serv}`,
                     start: startStr,
                     end: endStr,
-                    backgroundColor: esADefinir ? '#9e9e9e' : '#ff85a2',
+                    backgroundColor: esADefinir ? '#9e9e9e' : '#ff85a2', //
                     extendedProps: {
                         telefono: turno.cliente_telefono || '',
                         servicio: serv,
                         cliente: nombre
                     }
                 };
-            }).filter(e => e.start !== null); // Filtramos por si hay algún dato corrupto
+            }).filter(e => e.start !== null);
 
             loadingEl.style.display = 'none';
             successCallback(events);
         })
         .catch(err => {
-            console.error('Error cargando agenda:', err);
+            console.error('Error crítico en la agenda:', err);
             loadingEl.style.display = 'none';
             failureCallback(err);
         });
