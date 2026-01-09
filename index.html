@@ -8,129 +8,71 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #ff85a2; /* Rosa Tina Nails */
+            --primary: #ff85a2;
             --secondary: #fce4ec;
-            --definic: #9e9e9e; /* Gris para "A definir" */
+            --definic: #9e9e9e;
             --text: #333;
         }
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #fafafa;
-            margin: 0;
-            padding: 10px;
-            color: var(--text);
+        body { font-family: 'Poppins', sans-serif; background-color: #fafafa; margin: 0; padding: 10px; color: var(--text); }
+        .header { text-align: center; padding: 20px 0; }
+        .header h1 { margin: 0; color: var(--primary); font-weight: 600; }
+        #calendar { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 1100px; margin: 0 auto; }
+
+        /* Botón Agregar Flotante */
+        .btn-add {
+            position: fixed; bottom: 30px; right: 30px;
+            background: var(--primary); color: white;
+            width: 60px; height: 60px; border-radius: 50%;
+            font-size: 30px; border: none; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 133, 162, 0.4); z-index: 999;
         }
 
-        .header {
-            text-align: center;
-            padding: 20px 0;
-        }
+        /* Modal */
+        #eventModal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(5px); }
+        .modal-content { background-color: white; margin: 10% auto; padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; }
+        
+        /* Botones de Acción */
+        .btn-wsp { background-color: #25D366; color: white; text-decoration: none; padding: 10px 15px; border-radius: 50px; display: inline-flex; align-items: center; margin-top: 10px; font-size: 14px; }
+        .btn-delete { background-color: #ff5252; color: white; border: none; padding: 10px 15px; border-radius: 10px; cursor: pointer; margin: 5px; font-family: 'Poppins'; }
+        .btn-edit { background-color: #448aff; color: white; border: none; padding: 10px 15px; border-radius: 10px; cursor: pointer; margin: 5px; font-family: 'Poppins'; }
+        .btn-save { background-color: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 10px; cursor: pointer; width: 100%; font-size: 16px; margin-top: 10px; font-family: 'Poppins'; }
+        .close-btn { background: #eee; border: none; padding: 8px 15px; border-radius: 10px; margin-top: 10px; cursor: pointer; font-family: 'Poppins'; }
 
-        .header h1 {
-            margin: 0;
-            color: var(--primary);
-            font-weight: 600;
-        }
-
-        #calendar {
-            background: white;
-            padding: 15px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        /* Estilos de los turnos */
-        .fc-event {
-            cursor: pointer;
-            border: none !important;
-            padding: 2px 5px;
-            transition: transform 0.2s;
-        }
-
-        .fc-event:hover {
-            transform: scale(1.02);
-        }
-
-        /* Modal para detalles */
-        #eventModal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            backdrop-filter: blur(5px);
-        }
-
-        .modal-content {
-            background-color: white;
-            margin: 15% auto;
-            padding: 25px;
-            border-radius: 20px;
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-
-        .modal-content h3 { color: var(--primary); margin-top: 0; }
-
-        .btn-wsp {
-            background-color: #25D366;
-            color: white;
-            text-decoration: none;
-            padding: 12px 20px;
-            border-radius: 50px;
-            display: inline-flex;
-            align-items: center;
-            margin-top: 15px;
-            font-weight: 600;
-        }
-
-        .close-btn {
-            background: #eee;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 10px;
-            margin-top: 10px;
-            cursor: pointer;
-        }
-
-        /* Indicador de carga */
-        #loading {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--primary);
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            display: none;
-        }
+        /* Formulario */
+        .modal-form input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; font-family: 'Poppins'; }
+        #loading { position: fixed; top: 20px; right: 20px; background: var(--primary); color: white; padding: 5px 15px; border-radius: 20px; display: none; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>Agenda Tina Nails 💅</h1>
-    </div>
+    <button class="btn-add" onclick="openAddModal()">+</button>
 
+    <div class="header"><h1>Agenda Tina Nails 💅</h1></div>
     <div id="loading">Cargando...</div>
     <div id="calendar"></div>
 
     <div id="eventModal">
         <div class="modal-content">
             <h3 id="modalTitle">Detalle del Turno</h3>
-            <p id="modalInfo"></p>
-            <hr>
-            <a href="#" id="wspLink" target="_blank" class="btn-wsp">
-                Enviar WhatsApp 📱
-            </a>
+            
+            <div id="modalView">
+                <p id="modalInfo"></p>
+                <a href="#" id="wspLink" target="_blank" class="btn-wsp">WhatsApp Clienta 📱</a><br><br>
+                <button class="btn-edit" onclick="toggleEdit(true)">Editar Turno ✏️</button>
+                <button class="btn-delete" onclick="deleteEvent()">Eliminar 🗑️</button>
+            </div>
+
+            <div id="modalEdit" style="display:none;" class="modal-form">
+                <input type="hidden" id="editId">
+                <input type="text" id="editNombre" placeholder="Nombre de la clienta">
+                <input type="text" id="editTel" placeholder="Teléfono (ej: 549...)">
+                <input type="datetime-local" id="editInicio">
+                <input type="text" id="editServicio" placeholder="Servicio (ej: Soft Gel)">
+                <button class="btn-save" onclick="saveEvent()">Guardar Cambios ✅</button>
+                <button class="close-btn" onclick="toggleEdit(false)">Volver</button>
+            </div>
+            
             <br>
             <button onclick="closeModal()" class="close-btn">Cerrar</button>
         </div>
@@ -139,98 +81,118 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
 
     <script>
+        let calendar;
+        const URLS = {
+            GET: 'https://prueba-turnos-n8n.feygzx.easypanel.host/webhook/aa8029ab-3f39-497e-944b-b79f7456eb59',
+            CREAR: 'https://prueba-turnos-n8n.feygzx.easypanel.host/webhook/agenda-crear',
+            EDITAR: 'https://prueba-turnos-n8n.feygzx.easypanel.host/webhook/agenda-editar',
+            ELIMINAR: 'https://prueba-turnos-n8n.feygzx.easypanel.host/webhook/agenda-eliminar'
+        };
+
         document.addEventListener('DOMContentLoaded', function() {
             const calendarEl = document.getElementById('calendar');
-            const loadingEl = document.getElementById('loading');
-            const webhookUrl = 'https://prueba-turnos-n8n.feygzx.easypanel.host/webhook/aa8029ab-3f39-497e-944b-b79f7456eb59';
-
-            const calendar = new FullCalendar.Calendar(calendarEl, {
+            calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek',
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
-                },
+                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
                 locale: 'es',
                 slotMinTime: '10:00:00',
                 slotMaxTime: '21:00:00',
                 allDaySlot: false,
-                slotDuration: '00:30:00',
                 slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
                 
                 events: function(fetchInfo, successCallback, failureCallback) {
-    loadingEl.style.display = 'block';
-    fetch(webhookUrl)
-        .then(response => response.json())
-        .then(data => {
-            console.log("Datos recibidos de n8n:", data); // Esto nos dirá la verdad en el Console
-
-            // --- ESCUDO DE COMPATIBILIDAD ---
-            // Si n8n manda el array adentro de una propiedad (ej: data.response o data.items)
-            let turnosArr = [];
-            if (Array.isArray(data)) {
-                turnosArr = data;
-            } else if (data.response && Array.isArray(data.response)) {
-                turnosArr = data.response;
-            } else if (typeof data === 'object' && data !== null) {
-                // Si es un solo objeto (un solo turno), lo convertimos en array
-                turnosArr = [data];
-            }
-
-            const events = turnosArr.map(turno => {
-                // Limpieza de fechas para FullCalendar
-                const startStr = turno.fecha_inicio ? String(turno.fecha_inicio).replace(' ', 'T') : null;
-                const endStr = turno.fecha_fin ? String(turno.fecha_fin).replace(' ', 'T') : null;
-
-                const serv = turno.servicio || 'A definir';
-                const nombre = turno.cliente_nombre || 'Sin nombre';
-                const esADefinir = serv.toLowerCase().includes('definir');
-
-                return {
-                    id: turno.id,
-                    title: `${nombre} - ${serv}`,
-                    start: startStr,
-                    end: endStr,
-                    backgroundColor: esADefinir ? '#9e9e9e' : '#ff85a2', //
-                    extendedProps: {
-                        telefono: turno.cliente_telefono || '',
-                        servicio: serv,
-                        cliente: nombre
-                    }
-                };
-            }).filter(e => e.start !== null);
-
-            loadingEl.style.display = 'none';
-            successCallback(events);
-        })
-        .catch(err => {
-            console.error('Error crítico en la agenda:', err);
-            loadingEl.style.display = 'none';
-            failureCallback(err);
-        });
-},
+                    document.getElementById('loading').style.display = 'block';
+                    fetch(URLS.GET)
+                        .then(res => res.json())
+                        .then(data => {
+                            let turnosArr = Array.isArray(data) ? data : (data.response || [data]);
+                            const events = turnosArr.map(t => ({
+                                id: t.id,
+                                title: `${t.cliente_nombre} - ${t.servicio || 'A definir'}`,
+                                start: String(t.fecha_inicio).replace(' ', 'T'),
+                                end: String(t.fecha_fin).replace(' ', 'T'),
+                                backgroundColor: (t.servicio || '').toLowerCase().includes('definir') ? '#9e9e9e' : '#ff85a2',
+                                extendedProps: { telefono: t.cliente_telefono, servicio: t.servicio, cliente: t.cliente_nombre }
+                            }));
+                            document.getElementById('loading').style.display = 'none';
+                            successCallback(events);
+                        });
+                },
 
                 eventClick: function(info) {
-                    const props = info.event.extendedProps;
-                    const cleanPhone = props.telefono.replace(/\D/g, ''); // Limpiar para WhatsApp
+                    const p = info.event.extendedProps;
+                    document.getElementById('editId').value = info.event.id;
+                    document.getElementById('editNombre').value = p.cliente;
+                    document.getElementById('editTel').value = p.telefono;
+                    document.getElementById('editServicio').value = p.servicio;
+                    // Formato para datetime-local
+                    document.getElementById('editInicio').value = info.event.start.toISOString().slice(0, 16);
                     
-                    document.getElementById('modalTitle').innerText = props.cliente;
+                    document.getElementById('modalTitle').innerText = "Gestionar Turno";
                     document.getElementById('modalInfo').innerHTML = `
-                        <b>Servicio:</b> ${props.servicio}<br>
-                        <b>Horario:</b> ${info.event.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}hs<br>
-                        <b>Tel:</b> ${props.telefono}
+                        <b>Clienta:</b> ${p.cliente}<br>
+                        <b>Servicio:</b> ${p.servicio}<br>
+                        <b>Horario:</b> ${info.event.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}hs
                     `;
-                    document.getElementById('wspLink').href = `https://wa.me/${cleanPhone}`;
+                    document.getElementById('wspLink').href = `https://wa.me/${p.telefono.replace(/\D/g, '')}`;
+                    toggleEdit(false);
                     document.getElementById('eventModal').style.display = 'block';
                 }
             });
-
             calendar.render();
         });
 
-        function closeModal() {
-            document.getElementById('eventModal').style.display = 'none';
+        async function saveEvent() {
+            const id = document.getElementById('editId').value;
+            const data = {
+                id: id,
+                nombre: document.getElementById('editNombre').value,
+                telefono: document.getElementById('editTel').value,
+                inicio: document.getElementById('editInicio').value.replace('T', ' '),
+                servicio: document.getElementById('editServicio').value || 'A definir'
+            };
+
+            const url = id ? URLS.EDITAR : URLS.CREAR;
+            
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (res.ok) { closeModal(); calendar.refetchEvents(); }
+            } catch (e) { alert("Error al guardar"); }
         }
+
+        async function deleteEvent() {
+            if (!confirm("¿Borrar este turno definitivamente?")) return;
+            try {
+                await fetch(URLS.ELIMINAR, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: document.getElementById('editId').value })
+                });
+                closeModal(); calendar.refetchEvents();
+            } catch (e) { alert("Error al eliminar"); }
+        }
+
+        function openAddModal() {
+            document.getElementById('editId').value = "";
+            document.getElementById('editNombre').value = "";
+            document.getElementById('editTel').value = "";
+            document.getElementById('editServicio').value = "";
+            document.getElementById('editInicio').value = "";
+            document.getElementById('modalTitle').innerText = "Nuevo Turno";
+            toggleEdit(true);
+            document.getElementById('eventModal').style.display = 'block';
+        }
+
+        function toggleEdit(show) {
+            document.getElementById('modalView').style.display = show ? 'none' : 'block';
+            document.getElementById('modalEdit').style.display = show ? 'block' : 'none';
+        }
+
+        function closeModal() { document.getElementById('eventModal').style.display = 'none'; }
     </script>
 </body>
 </html>
