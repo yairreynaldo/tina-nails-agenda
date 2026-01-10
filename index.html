@@ -1,198 +1,922 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agenda Tina Nails 💅</title>
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #ff85a2;
-            --secondary: #fce4ec;
-            --definic: #9e9e9e;
-            --text: #333;
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tina Nails · Agenda</title>
+
+  <!-- Tailwind (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            blush: {
+              50:  "#fff1f6",
+              100: "#ffe4ee",
+              200: "#fecddf",
+              300: "#fda4c8",
+              400: "#fb6ea8",
+              500: "#f43f8f",
+              600: "#e11d79",
+              700: "#be185d",
+              800: "#9d174d",
+              900: "#831843",
+            }
+          }
         }
+      }
+    }
+  </script>
 
-        body { font-family: 'Poppins', sans-serif; background-color: #fafafa; margin: 0; padding: 10px; color: var(--text); }
-        .header { text-align: center; padding: 20px 0; }
-        .header h1 { margin: 0; color: var(--primary); font-weight: 600; }
-        #calendar { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 1100px; margin: 0 auto; }
+  <!-- FullCalendar (global bundle incluye dayGrid/timeGrid/list/interaction) -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 
-        /* Botón Agregar Flotante */
-        .btn-add {
-            position: fixed; bottom: 30px; right: 30px;
-            background: var(--primary); color: white;
-            width: 60px; height: 60px; border-radius: 50%;
-            font-size: 30px; border: none; cursor: pointer;
-            box-shadow: 0 4px 15px rgba(255, 133, 162, 0.4); z-index: 999;
-        }
-
-        /* Modal */
-        #eventModal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(5px); }
-        .modal-content { background-color: white; margin: 10% auto; padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; }
-        
-        /* Botones de Acción */
-        .btn-wsp { background-color: #25D366; color: white; text-decoration: none; padding: 10px 15px; border-radius: 50px; display: inline-flex; align-items: center; margin-top: 10px; font-size: 14px; }
-        .btn-delete { background-color: #ff5252; color: white; border: none; padding: 10px 15px; border-radius: 10px; cursor: pointer; margin: 5px; font-family: 'Poppins'; }
-        .btn-edit { background-color: #448aff; color: white; border: none; padding: 10px 15px; border-radius: 10px; cursor: pointer; margin: 5px; font-family: 'Poppins'; }
-        .btn-save { background-color: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 10px; cursor: pointer; width: 100%; font-size: 16px; margin-top: 10px; font-family: 'Poppins'; }
-        .close-btn { background: #eee; border: none; padding: 8px 15px; border-radius: 10px; margin-top: 10px; cursor: pointer; font-family: 'Poppins'; }
-
-        /* Formulario */
-        .modal-form input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; font-family: 'Poppins'; }
-        #loading { position: fixed; top: 20px; right: 20px; background: var(--primary); color: white; padding: 5px 15px; border-radius: 20px; display: none; }
-    </style>
+  <style>
+    /* FullCalendar: toque minimalista */
+    .fc .fc-toolbar-title { font-size: 1.05rem; font-weight: 700; }
+    .fc .fc-button { border-radius: 0.75rem; border: 0; }
+    .fc .fc-button-primary { background: #f43f8f; }
+    .fc .fc-button-primary:not(:disabled):active,
+    .fc .fc-button-primary:not(:disabled).fc-button-active { background: #e11d79; }
+    .fc .fc-timegrid-slot { height: 2.6rem; } /* mobile-friendly */
+    .fc .fc-event { border-radius: 0.75rem; border: 0; }
+    .fc .fc-event-title { font-weight: 700; }
+  </style>
 </head>
-<body>
 
-    <button class="btn-add" onclick="openAddModal()">+</button>
+<body class="min-h-screen bg-gradient-to-b from-blush-50 to-white text-slate-900">
 
-    <div class="header"><h1>Agenda Tina Nails 💅</h1></div>
-    <div id="loading">Cargando...</div>
-    <div id="calendar"></div>
-
-    <div id="eventModal">
-        <div class="modal-content">
-            <h3 id="modalTitle">Detalle del Turno</h3>
-            
-            <div id="modalView">
-                <p id="modalInfo"></p>
-                <a href="#" id="wspLink" target="_blank" class="btn-wsp">WhatsApp Clienta 📱</a><br><br>
-                <button class="btn-edit" onclick="toggleEdit(true)">Editar Turno ✏️</button>
-                <button class="btn-delete" onclick="deleteEvent()">Eliminar 🗑️</button>
-            </div>
-
-            <div id="modalEdit" style="display:none;" class="modal-form">
-                <input type="hidden" id="editId">
-                <input type="text" id="editNombre" placeholder="Nombre de la clienta">
-                <input type="text" id="editTel" placeholder="Teléfono (ej: 549...)">
-                <input type="datetime-local" id="editInicio">
-                <input type="text" id="editServicio" placeholder="Servicio (ej: Soft Gel)">
-                <button class="btn-save" onclick="saveEvent()">Guardar Cambios ✅</button>
-                <button class="close-btn" onclick="toggleEdit(false)">Volver</button>
-            </div>
-            
-            <br>
-            <button onclick="closeModal()" class="close-btn">Cerrar</button>
+  <!-- Topbar -->
+  <header class="sticky top-0 z-30 backdrop-blur bg-white/70 border-b border-slate-200">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-blush-100 flex items-center justify-center">
+          <span class="text-blush-700 font-black">TN</span>
         </div>
+        <div class="leading-tight">
+          <div class="font-extrabold text-lg">Tina Nails</div>
+          <div class="text-xs text-slate-500 -mt-0.5">Agenda · mobile-first</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button id="tabAgenda"
+          class="px-3 py-2 rounded-xl text-sm font-bold bg-blush-600 text-white shadow-sm hover:bg-blush-700">
+          Agenda
+        </button>
+        <button id="tabArchivados"
+          class="px-3 py-2 rounded-xl text-sm font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50">
+          Archivados
+        </button>
+      </div>
     </div>
+  </header>
 
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+  <main class="max-w-6xl mx-auto px-4 py-4 pb-28">
+    <!-- Agenda -->
+    <section id="viewAgenda" class="space-y-3">
+      <div class="flex items-start justify-between gap-3">
+        <div class="text-sm text-slate-600">
+          <div class="font-semibold">Reglas:</div>
+          <div>Turnos de <b>1 hora</b>. Sin colisiones. Horarios fijos por día.</div>
+        </div>
 
-    <script>
-        let calendar;
-        const URLS = {
-            GET: 'https://prueba-turnos-n8n.feygzx.easypanel.host/webhook/aa8029ab-3f39-497e-944b-b79f7456eb59',
-            CREAR: 'https://prueba-turnos-n8n.feygzx.easypanel.host/webhook/agenda-crear',
-            EDITAR: 'https://prueba-turnos-n8n.feygzx.easypanel.host/webhook/agenda-editar',
-            ELIMINAR: 'https://prueba-turnos-n8n.feygzx.easypanel.host/webhook/agenda-eliminar'
-        };
+        <button id="btnNuevo"
+          class="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-blush-600 text-white font-extrabold shadow-sm hover:bg-blush-700">
+          <span class="text-lg leading-none">＋</span> Nuevo turno
+        </button>
+      </div>
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const calendarEl = document.getElementById('calendar');
-            calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek',
-                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
-                locale: 'es',
-                slotMinTime: '10:00:00',
-                slotMaxTime: '21:00:00',
-                allDaySlot: false,
-                slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
-                
-                events: function(fetchInfo, successCallback, failureCallback) {
-                    document.getElementById('loading').style.display = 'block';
-                    fetch(URLS.GET)
-                        .then(res => res.json())
-                        .then(data => {
-                            let turnosArr = Array.isArray(data) ? data : (data.response || [data]);
-                            const events = turnosArr.map(t => ({
-                                id: t.id,
-                                title: `${t.cliente_nombre} - ${t.servicio || 'A definir'}`,
-                                start: String(t.fecha_inicio).replace(' ', 'T'),
-                                end: String(t.fecha_fin).replace(' ', 'T'),
-                                backgroundColor: (t.servicio || '').toLowerCase().includes('definir') ? '#9e9e9e' : '#ff85a2',
-                                extendedProps: { telefono: t.cliente_telefono, servicio: t.servicio, cliente: t.cliente_nombre }
-                            }));
-                            document.getElementById('loading').style.display = 'none';
-                            successCallback(events);
-                        });
-                },
+      <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div id="calendar" class="p-2 sm:p-3"></div>
+      </div>
+    </section>
 
-                eventClick: function(info) {
-                    const p = info.event.extendedProps;
-                    document.getElementById('editId').value = info.event.id;
-                    document.getElementById('editNombre').value = p.cliente;
-                    document.getElementById('editTel').value = p.telefono;
-                    document.getElementById('editServicio').value = p.servicio;
-                    // Formato para datetime-local
-                    document.getElementById('editInicio').value = info.event.start.toISOString().slice(0, 16);
-                    
-                    document.getElementById('modalTitle').innerText = "Gestionar Turno";
-                    document.getElementById('modalInfo').innerHTML = `
-                        <b>Clienta:</b> ${p.cliente}<br>
-                        <b>Servicio:</b> ${p.servicio}<br>
-                        <b>Horario:</b> ${info.event.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}hs
-                    `;
-                    document.getElementById('wspLink').href = `https://wa.me/${p.telefono.replace(/\D/g, '')}`;
-                    toggleEdit(false);
-                    document.getElementById('eventModal').style.display = 'block';
-                }
-            });
-            calendar.render();
-        });
+    <!-- Archivados -->
+    <section id="viewArchivados" class="hidden space-y-3">
+      <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4">
+        <div class="flex flex-col sm:flex-row sm:items-end gap-3 sm:justify-between">
+          <div>
+            <div class="font-extrabold text-lg">Archivados</div>
+            <div class="text-sm text-slate-600">Turnos pasados o cancelados.</div>
+          </div>
+          <div class="flex items-center gap-2">
+            <input id="archSearch" type="search" placeholder="Buscar (nombre / tel / servicio)…"
+              class="w-full sm:w-80 px-3 py-2 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blush-200" />
+            <button id="btnArchReload"
+              class="px-3 py-2 rounded-2xl border border-slate-200 hover:bg-slate-50 font-bold">
+              Actualizar
+            </button>
+          </div>
+        </div>
+      </div>
 
-        async function saveEvent() {
-            const id = document.getElementById('editId').value;
-            const data = {
-                id: id,
-                nombre: document.getElementById('editNombre').value,
-                telefono: document.getElementById('editTel').value,
-                inicio: document.getElementById('editInicio').value.replace('T', ' '),
-                servicio: document.getElementById('editServicio').value || 'A definir'
-            };
+      <div id="archList" class="space-y-2"></div>
+      <div id="archEmpty" class="hidden text-center text-slate-500 py-10">
+        No hay archivados para mostrar.
+      </div>
+    </section>
+  </main>
 
-            const url = id ? URLS.EDITAR : URLS.CREAR;
-            
-            try {
-                const res = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                if (res.ok) { closeModal(); calendar.refetchEvents(); }
-            } catch (e) { alert("Error al guardar"); }
-        }
+  <!-- FAB (mobile) -->
+  <button id="fab"
+    class="sm:hidden fixed bottom-5 right-5 z-40 w-14 h-14 rounded-2xl bg-blush-600 text-white shadow-lg font-black text-2xl">
+    +
+  </button>
 
-        async function deleteEvent() {
-            if (!confirm("¿Borrar este turno definitivamente?")) return;
-            try {
-                await fetch(URLS.ELIMINAR, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: document.getElementById('editId').value })
-                });
-                closeModal(); calendar.refetchEvents();
-            } catch (e) { alert("Error al eliminar"); }
-        }
+  <!-- Modal: Crear/Editar -->
+  <div id="modal" class="hidden fixed inset-0 z-50">
+    <div class="absolute inset-0 bg-black/35"></div>
+    <div class="absolute inset-x-0 bottom-0 sm:inset-0 sm:flex sm:items-center sm:justify-center">
+      <div class="w-full sm:max-w-xl bg-white rounded-t-3xl sm:rounded-3xl border border-slate-200 shadow-xl p-4 sm:p-6">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div id="modalTitle" class="font-extrabold text-lg">Nuevo turno</div>
+            <div class="text-sm text-slate-600">Elegí fecha y horario (slots válidos).</div>
+          </div>
+          <button id="btnCloseModal" class="p-2 rounded-xl hover:bg-slate-100">✕</button>
+        </div>
 
-        function openAddModal() {
-            document.getElementById('editId').value = "";
-            document.getElementById('editNombre').value = "";
-            document.getElementById('editTel').value = "";
-            document.getElementById('editServicio').value = "";
-            document.getElementById('editInicio').value = "";
-            document.getElementById('modalTitle').innerText = "Nuevo Turno";
-            toggleEdit(true);
-            document.getElementById('eventModal').style.display = 'block';
-        }
+        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <label class="block">
+            <div class="text-xs font-bold text-slate-600 mb-1">Cliente</div>
+            <input id="fNombre" type="text" placeholder="Nombre"
+              class="w-full px-3 py-2 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blush-200" />
+          </label>
 
-        function toggleEdit(show) {
-            document.getElementById('modalView').style.display = show ? 'none' : 'block';
-            document.getElementById('modalEdit').style.display = show ? 'block' : 'none';
-        }
+          <label class="block">
+            <div class="text-xs font-bold text-slate-600 mb-1">Teléfono</div>
+            <input id="fTelefono" type="tel" placeholder="Ej: 2314..."
+              class="w-full px-3 py-2 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blush-200" />
+          </label>
 
-        function closeModal() { document.getElementById('eventModal').style.display = 'none'; }
-    </script>
+          <label class="block sm:col-span-2">
+            <div class="text-xs font-bold text-slate-600 mb-1">Servicio</div>
+            <select id="fServicio"
+              class="w-full px-3 py-2 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blush-200">
+              <option value="A definir">A definir</option>
+              <option value="Semipermanente">Semipermanente</option>
+              <option value="Kapping">Kapping</option>
+              <option value="Esculpidas">Esculpidas</option>
+              <option value="Retirado">Retirado</option>
+              <option value="Reparación">Reparación</option>
+              <option value="Otro">Otro (escribir abajo)</option>
+            </select>
+            <input id="fServicioOtro" type="text" placeholder="Escribir servicio…"
+              class="mt-2 hidden w-full px-3 py-2 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blush-200" />
+          </label>
+
+          <label class="block">
+            <div class="text-xs font-bold text-slate-600 mb-1">Fecha</div>
+            <input id="fFecha" type="date"
+              class="w-full px-3 py-2 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blush-200" />
+          </label>
+
+          <div class="block">
+            <div class="text-xs font-bold text-slate-600 mb-1">Hora (slots)</div>
+            <div id="slots" class="grid grid-cols-3 gap-2"></div>
+            <div id="slotsHint" class="text-xs text-slate-500 mt-2"></div>
+          </div>
+        </div>
+
+        <div class="mt-4 flex items-center justify-between gap-2">
+          <button id="btnDelete"
+            class="hidden px-3 py-2 rounded-2xl border border-slate-200 hover:bg-slate-50 font-bold text-slate-700">
+            Cancelar turno
+          </button>
+
+          <div class="ml-auto flex items-center gap-2">
+            <button id="btnWhats"
+              class="hidden px-3 py-2 rounded-2xl border border-slate-200 hover:bg-slate-50 font-bold">
+              WhatsApp
+            </button>
+
+            <button id="btnSave"
+              class="px-4 py-2 rounded-2xl bg-blush-600 text-white font-extrabold shadow-sm hover:bg-blush-700">
+              Guardar
+            </button>
+          </div>
+        </div>
+
+        <div id="modalError" class="hidden mt-3 text-sm text-red-600 font-semibold"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="hidden fixed z-50 left-1/2 -translate-x-1/2 bottom-6 px-4 py-3 rounded-2xl bg-slate-900 text-white text-sm shadow-xl"></div>
+
+<script>
+/** =========================
+ *  CONFIG
+ *  ========================= */
+const API = {
+  // GET agenda (tu workflow actual)
+  GET_AGENDA: "https://prueba-turnos-n8n.feygzx.easypanel.host/webhook/aa8029ab-b2b0-4878-94ce-09ae6f07b24e",
+
+  // CRUD (tu workflow actual)
+  CREAR: "https://prueba-turnos-n8n.feygzx.easypanel.host/webhook/agenda-crear",
+  EDITAR: "https://prueba-turnos-n8n.feygzx.easypanel.host/webhook/agenda-editar",
+  ELIMINAR: "https://prueba-turnos-n8n.feygzx.easypanel.host/webhook/agenda-eliminar",
+
+  // (recomendado) nuevo endpoint para archivados:
+  GET_ARCHIVADOS: "https://prueba-turnos-n8n.feygzx.easypanel.host/webhook/agenda-archivados"
+};
+
+const TZ = "America/Argentina/Buenos_Aires";
+const DURACION_MIN = 60;
+
+/** Horarios por día (0=Dom ... 6=Sáb) */
+const HORARIOS = {
+  // Lun(1), Mié(3), Vie(5)
+  1: [{ start: "10:00", end: "12:00" }, { start: "14:30", end: "20:30" }],
+  3: [{ start: "10:00", end: "12:00" }, { start: "14:30", end: "20:30" }],
+  5: [{ start: "10:00", end: "12:00" }, { start: "14:30", end: "20:30" }],
+
+  // Mar(2), Jue(4)
+  2: [{ start: "10:00", end: "12:00" }, { start: "15:30", end: "20:30" }],
+  4: [{ start: "10:00", end: "12:00" }, { start: "15:30", end: "20:30" }],
+};
+
+/** =========================
+ *  HELPERS (fechas/horas)
+ *  ========================= */
+function pad2(n){ return String(n).padStart(2,"0"); }
+
+function formatDateInTZ(date, timeZone=TZ){
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone, year:"numeric", month:"2-digit", day:"2-digit"
+  }).formatToParts(date);
+  const y = parts.find(p=>p.type==="year").value;
+  const m = parts.find(p=>p.type==="month").value;
+  const d = parts.find(p=>p.type==="day").value;
+  return `${y}-${m}-${d}`;
+}
+
+function formatTimeInTZ(date, timeZone=TZ){
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone, hour:"2-digit", minute:"2-digit", hour12:false
+  }).formatToParts(date);
+  const hh = parts.find(p=>p.type==="hour").value;
+  const mm = parts.find(p=>p.type==="minute").value;
+  return `${hh}:${mm}`;
+}
+
+function timeToMinutes(hhmm){
+  const [h,m]=hhmm.split(":").map(Number);
+  return h*60+m;
+}
+
+function minutesToTime(min){
+  const h=Math.floor(min/60), m=min%60;
+  return `${pad2(h)}:${pad2(m)}`;
+}
+
+function addMinutes(hhmm, mins){
+  return minutesToTime(timeToMinutes(hhmm)+mins);
+}
+
+/** Construye "YYYY-MM-DD HH:mm:ss" sin convertir a UTC */
+function toPgTimestamp(dateYYYYMMDD, hhmm){
+  return `${dateYYYYMMDD} ${hhmm}:00`;
+}
+
+function dayOfWeekFromDateYYYYMMDD(dateStr){
+  // Interpretamos como fecha local (no UTC) evitando corrimientos: YYYY-MM-DD
+  const [y,m,d]=dateStr.split("-").map(Number);
+  const dt = new Date(y, m-1, d, 12, 0, 0); // mediodía evita edge cases DST
+  return dt.getDay();
+}
+
+/** Slots válidos (1h) dentro de los bloques del día */
+function buildSlotsForDate(dateYYYYMMDD){
+  const dow = dayOfWeekFromDateYYYYMMDD(dateYYYYMMDD);
+  const blocks = HORARIOS[dow] || [];
+  const slots = [];
+  for(const b of blocks){
+    const startMin = timeToMinutes(b.start);
+    const endMin = timeToMinutes(b.end);
+    // último inicio permitido = end - 60
+    for(let t=startMin; t<=endMin - DURACION_MIN; t+=DURACION_MIN){
+      slots.push(minutesToTime(t));
+    }
+  }
+  return slots;
+}
+
+/** =========================
+ *  UI state
+ *  ========================= */
+let calendar;
+let eventsCache = []; // raw fetched
+let eventById = new Map(); // id -> event
+let occupiedByDate = new Map(); // YYYY-MM-DD -> Set("HH:mm")
+
+let modalMode = "create"; // create|edit
+let editingId = null;
+let selectedSlot = null; // "HH:mm"
+
+/** =========================
+ *  TOAST
+ *  ========================= */
+const toastEl = document.getElementById("toast");
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.remove("hidden");
+  clearTimeout(toastEl._t);
+  toastEl._t = setTimeout(()=>toastEl.classList.add("hidden"), 2200);
+}
+
+/** =========================
+ *  MODAL
+ *  ========================= */
+const modal = document.getElementById("modal");
+const modalTitle = document.getElementById("modalTitle");
+const modalError = document.getElementById("modalError");
+
+const fNombre = document.getElementById("fNombre");
+const fTelefono = document.getElementById("fTelefono");
+const fServicio = document.getElementById("fServicio");
+const fServicioOtro = document.getElementById("fServicioOtro");
+const fFecha = document.getElementById("fFecha");
+const slotsEl = document.getElementById("slots");
+const slotsHint = document.getElementById("slotsHint");
+
+const btnDelete = document.getElementById("btnDelete");
+const btnWhats = document.getElementById("btnWhats");
+const btnSave = document.getElementById("btnSave");
+
+fServicio.addEventListener("change", ()=>{
+  if(fServicio.value === "Otro") fServicioOtro.classList.remove("hidden");
+  else fServicioOtro.classList.add("hidden");
+});
+
+function openModalCreate({dateYYYYMMDD, hhmm}={}){
+  modalMode = "create";
+  editingId = null;
+  modalTitle.textContent = "Nuevo turno";
+  btnDelete.classList.add("hidden");
+  btnWhats.classList.add("hidden");
+  modalError.classList.add("hidden");
+  modalError.textContent = "";
+
+  fNombre.value = "";
+  fTelefono.value = "";
+  fServicio.value = "A definir";
+  fServicioOtro.value = "";
+  fServicioOtro.classList.add("hidden");
+
+  const today = formatDateInTZ(new Date());
+  fFecha.value = dateYYYYMMDD || today;
+
+  selectedSlot = hhmm || null;
+  renderSlots();
+  modal.classList.remove("hidden");
+}
+
+function openModalEdit(turno){
+  modalMode = "edit";
+  editingId = turno.id;
+  modalTitle.textContent = "Editar turno";
+  btnDelete.classList.remove("hidden");
+  btnWhats.classList.remove("hidden");
+  modalError.classList.add("hidden");
+  modalError.textContent = "";
+
+  fNombre.value = turno.cliente_nombre || "";
+  fTelefono.value = turno.cliente_telefono || "";
+  const serv = turno.servicio || "A definir";
+  if(["A definir","Semipermanente","Kapping","Esculpidas","Retirado","Reparación"].includes(serv)){
+    fServicio.value = serv;
+    fServicioOtro.value = "";
+    fServicioOtro.classList.add("hidden");
+  } else {
+    fServicio.value = "Otro";
+    fServicioOtro.value = serv;
+    fServicioOtro.classList.remove("hidden");
+  }
+
+  // Fecha/hora desde start
+  const startDate = new Date(turno.fecha_inicio);
+  const dateYYYYMMDD = formatDateInTZ(startDate);
+  const hhmm = formatTimeInTZ(startDate);
+
+  fFecha.value = dateYYYYMMDD;
+  selectedSlot = hhmm;
+
+  // WhatsApp quick action
+  const tel = (turno.cliente_telefono || "").replace(/\D/g,"");
+  btnWhats.onclick = () => {
+    if(!tel) return toast("No hay teléfono.");
+    window.open(`https://wa.me/${tel}`, "_blank");
+  };
+
+  renderSlots();
+  modal.classList.remove("hidden");
+}
+
+function closeModal(){
+  modal.classList.add("hidden");
+}
+
+document.getElementById("btnCloseModal").addEventListener("click", closeModal);
+modal.addEventListener("click", (e)=>{
+  if(e.target === modal.querySelector(".absolute.inset-0")) closeModal();
+});
+
+fFecha.addEventListener("change", ()=>{
+  selectedSlot = null;
+  renderSlots();
+});
+
+function setModalError(msg){
+  modalError.textContent = msg;
+  modalError.classList.remove("hidden");
+}
+
+function getServicioFinal(){
+  if(fServicio.value === "Otro"){
+    const v = fServicioOtro.value.trim();
+    return v ? v : "A definir";
+  }
+  return fServicio.value;
+}
+
+function computeOccupied(){
+  occupiedByDate.clear();
+  for(const t of eventsCache){
+    // Solo activos para colisiones
+    if(String(t.estado||"activo").toLowerCase() !== "activo") continue;
+
+    const s = new Date(t.fecha_inicio);
+    const d = formatDateInTZ(s);
+    const hhmm = formatTimeInTZ(s);
+
+    if(!occupiedByDate.has(d)) occupiedByDate.set(d, new Set());
+    occupiedByDate.get(d).add(hhmm);
+  }
+}
+
+function renderSlots(){
+  const date = fFecha.value;
+  const slots = buildSlotsForDate(date);
+
+  slotsEl.innerHTML = "";
+  slotsHint.textContent = "";
+
+  if(slots.length === 0){
+    slotsHint.textContent = "Este día no hay atención (solo Lun–Vie).";
+    return;
+  }
+
+  const occ = occupiedByDate.get(date) || new Set();
+
+  for(const hhmm of slots){
+    // en edit, permitimos el slot actual aunque esté ocupado por ese mismo turno
+    let isOccupied = occ.has(hhmm);
+    if(modalMode === "edit" && selectedSlot === hhmm) isOccupied = false;
+
+    const isSelected = selectedSlot === hhmm;
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = hhmm;
+
+    let cls = "px-2 py-2 rounded-2xl text-sm font-extrabold border transition";
+    if(isOccupied){
+      cls += " bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed";
+      btn.disabled = true;
+      btn.title = "Ocupado";
+    } else if(isSelected){
+      cls += " bg-blush-600 text-white border-blush-600 shadow-sm";
+    } else {
+      cls += " bg-white text-slate-800 border-slate-200 hover:bg-blush-50 hover:border-blush-200";
+    }
+    btn.className = cls;
+
+    btn.addEventListener("click", ()=>{
+      selectedSlot = hhmm;
+      renderSlots();
+    });
+
+    slotsEl.appendChild(btn);
+  }
+
+  const occCount = (occupiedByDate.get(date)?.size || 0);
+  slotsHint.textContent = `Disponibles: ${slots.length - occCount} · Ocupados: ${occCount}`;
+}
+
+/** =========================
+ *  NETWORK
+ *  ========================= */
+async function fetchJSON(url, opts={}){
+  const res = await fetch(url, {
+    headers: { "Content-Type":"application/json", ...(opts.headers||{}) },
+    ...opts,
+  });
+
+  // n8n a veces responde 200 con texto; intentamos parsear
+  const text = await res.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+
+  if(!res.ok){
+    const msg = (data && data.error) ? data.error : `HTTP ${res.status}`;
+    const err = new Error(msg);
+    err.status = res.status;
+    err.data = data;
+    throw err;
+  }
+  return data;
+}
+
+/** FullCalendar pide rango, pero tu endpoint actual devuelve "desde hoy".
+ *  Igual lo usamos y refrescamos, y te recomiendo abajo cómo hacerlo por rango.
+ */
+async function loadAgenda(){
+  const data = await fetchJSON(API.GET_AGENDA);
+  // data debería ser array de turnos
+  eventsCache = Array.isArray(data) ? data : (data?.data || []);
+  eventById.clear();
+  for(const t of eventsCache){
+    eventById.set(String(t.id), t);
+  }
+  computeOccupied();
+}
+
+async function createTurno(payload){
+  return fetchJSON(API.CREAR, { method:"POST", body: JSON.stringify(payload) });
+}
+
+async function updateTurno(payload){
+  return fetchJSON(API.EDITAR, { method:"POST", body: JSON.stringify(payload) });
+}
+
+async function deleteTurno(id){
+  return fetchJSON(API.ELIMINAR, { method:"POST", body: JSON.stringify({ id }) });
+}
+
+/** =========================
+ *  CALENDAR
+ *  ========================= */
+function buildEventTitle(t){
+  const serv = t.servicio || "A definir";
+  const name = t.cliente_nombre || "Sin nombre";
+  return `${name} · ${serv}`;
+}
+
+function eventColor(t){
+  const serv = String(t.servicio||"A definir").toLowerCase();
+  if(serv === "a definir") return { bg:"#e5e7eb", text:"#111827" }; // gris
+  return { bg:"#f43f8f", text:"#ffffff" }; // blush
+}
+
+function toFullCalendarEvent(t){
+  const col = eventColor(t);
+  return {
+    id: String(t.id),
+    title: buildEventTitle(t),
+    start: t.fecha_inicio,
+    end: t.fecha_fin,
+    backgroundColor: col.bg,
+    textColor: col.text,
+    extendedProps: t
+  };
+}
+
+async function initCalendar(){
+  await loadAgenda();
+
+  const calendarEl = document.getElementById("calendar");
+  const isMobile = window.matchMedia("(max-width: 640px)").matches;
+
+  calendar = new FullCalendar.Calendar(calendarEl, {
+    timeZone: TZ,
+    locale: "es",
+    initialView: isMobile ? "timeGridDay" : "timeGridWeek",
+    nowIndicator: true,
+    height: "auto",
+    firstDay: 1,
+    allDaySlot: false,
+    slotDuration: "00:30:00",
+    snapDuration: "00:30:00",
+    slotMinTime: "09:00:00",
+    slotMaxTime: "21:00:00",
+    expandRows: true,
+    selectable: true,
+    selectMirror: true,
+    selectOverlap: false,
+    eventOverlap: false,
+
+    headerToolbar: isMobile
+      ? { left: "prev,next", center: "title", right: "today" }
+      : { left: "prev,next today", center: "title", right: "timeGridWeek,timeGridDay,listWeek" },
+
+    businessHours: [
+      // Lun/Mié/Vie
+      { daysOfWeek:[1,3,5], startTime:"10:00", endTime:"12:00" },
+      { daysOfWeek:[1,3,5], startTime:"14:30", endTime:"20:30" },
+      // Mar/Jue
+      { daysOfWeek:[2,4], startTime:"10:00", endTime:"12:00" },
+      { daysOfWeek:[2,4], startTime:"15:30", endTime:"20:30" },
+    ],
+
+    // Fuente de eventos: cache local + refresh con refetch
+    events: async (info, success, failure) => {
+      try{
+        await loadAgenda();
+        const events = eventsCache
+          .filter(t => String(t.estado||"activo").toLowerCase() === "activo")
+          .map(toFullCalendarEvent);
+        success(events);
+      }catch(e){
+        console.error(e);
+        failure(e);
+        toast("Error cargando agenda");
+      }
+    },
+
+    dateClick: (info) => {
+      // Si clickeó en timeGrid (tiene hora)
+      const date = info.date;
+      const dateYYYYMMDD = formatDateInTZ(date);
+      const hhmm = formatTimeInTZ(date);
+
+      const slots = buildSlotsForDate(dateYYYYMMDD);
+      if(!slots.includes(hhmm)){
+        return toast("Elegí un slot válido (según horario).");
+      }
+      // colisión?
+      const occ = occupiedByDate.get(dateYYYYMMDD) || new Set();
+      if(occ.has(hhmm)){
+        return toast("Ese horario ya está ocupado.");
+      }
+
+      openModalCreate({ dateYYYYMMDD, hhmm });
+    },
+
+    selectAllow: (selectInfo) => {
+      // Solo permitimos selección exacta 1h y que el inicio sea un slot válido
+      const start = selectInfo.start;
+      const end = selectInfo.end;
+
+      const startD = formatDateInTZ(start);
+      const startT = formatTimeInTZ(start);
+
+      const diffMin = Math.round((end - start)/60000);
+      if(diffMin !== DURACION_MIN) return false;
+
+      const slots = buildSlotsForDate(startD);
+      if(!slots.includes(startT)) return false;
+
+      const occ = occupiedByDate.get(startD) || new Set();
+      if(occ.has(startT)) return false;
+
+      return true;
+    },
+
+    select: (info) => {
+      const dateYYYYMMDD = formatDateInTZ(info.start);
+      const hhmm = formatTimeInTZ(info.start);
+      openModalCreate({ dateYYYYMMDD, hhmm });
+    },
+
+    eventClick: (info) => {
+      const t = info.event.extendedProps;
+      openModalEdit(t);
+    },
+
+    eventContent: (arg) => {
+      const t = arg.event.extendedProps;
+      const serv = t.servicio || "A definir";
+      const name = t.cliente_nombre || "Sin nombre";
+      const tel = t.cliente_telefono ? String(t.cliente_telefono) : "";
+
+      const wrap = document.createElement("div");
+      wrap.className = "px-2 py-1";
+      wrap.innerHTML = `
+        <div class="text-xs font-black leading-tight">${name}</div>
+        <div class="text-[11px] opacity-90 leading-tight">${serv}${tel ? " · " + tel : ""}</div>
+      `;
+      return { domNodes:[wrap] };
+    },
+  });
+
+  calendar.render();
+}
+
+/** =========================
+ *  SAVE / DELETE
+ *  ========================= */
+async function onSave(){
+  modalError.classList.add("hidden");
+  modalError.textContent = "";
+
+  const nombre = fNombre.value.trim();
+  const telefono = fTelefono.value.trim();
+  const servicio = getServicioFinal();
+  const fecha = fFecha.value;
+  const hhmm = selectedSlot;
+
+  if(!fecha) return setModalError("Elegí una fecha.");
+  if(!hhmm) return setModalError("Elegí un horario (slot).");
+  if(!nombre) return setModalError("Falta el nombre del cliente.");
+
+  // Validación de horario por reglas
+  const validSlots = buildSlotsForDate(fecha);
+  if(!validSlots.includes(hhmm)) return setModalError("Horario inválido para ese día.");
+
+  // Colisión (frontend)
+  const occ = occupiedByDate.get(fecha) || new Set();
+  const collides = occ.has(hhmm) && !(modalMode==="edit" && hhmm===selectedSlot);
+  if(collides) return setModalError("Ese horario ya está ocupado.");
+
+  // Construimos inicio/fin como strings (sin UTC)
+  const inicio = toPgTimestamp(fecha, hhmm);
+  const fin = toPgTimestamp(fecha, addMinutes(hhmm, DURACION_MIN));
+
+  btnSave.disabled = true;
+  btnSave.classList.add("opacity-70");
+
+  try{
+    if(modalMode === "create"){
+      await createTurno({
+        cliente_nombre: nombre,
+        cliente_telefono: telefono,
+        servicio,
+        fecha_inicio: inicio,
+        fecha_fin: fin,
+        estado: "activo",
+      });
+      toast("Turno creado ✅");
+    } else {
+      await updateTurno({
+        id: editingId,
+        cliente_nombre: nombre,
+        cliente_telefono: telefono,
+        servicio,
+        fecha_inicio: inicio,
+        fecha_fin: fin,
+      });
+      toast("Turno actualizado ✅");
+    }
+
+    closeModal();
+    calendar.refetchEvents(); // sync inmediato
+  }catch(e){
+    console.error(e);
+    if(e.status === 409) setModalError("Ese horario ya está ocupado (colisión).");
+    else setModalError(e.message || "Error guardando.");
+  }finally{
+    btnSave.disabled = false;
+    btnSave.classList.remove("opacity-70");
+  }
+}
+
+btnSave.addEventListener("click", onSave);
+
+btnDelete.addEventListener("click", async ()=>{
+  if(!editingId) return;
+  if(!confirm("¿Cancelar este turno?")) return;
+
+  try{
+    await deleteTurno(editingId);
+    toast("Turno cancelado ✅");
+    closeModal();
+    calendar.refetchEvents();
+  }catch(e){
+    console.error(e);
+    setModalError(e.message || "Error cancelando.");
+  }
+});
+
+/** =========================
+ *  TABS
+ *  ========================= */
+const tabAgenda = document.getElementById("tabAgenda");
+const tabArchivados = document.getElementById("tabArchivados");
+const viewAgenda = document.getElementById("viewAgenda");
+const viewArchivados = document.getElementById("viewArchivados");
+
+function setTab(which){
+  const isAgenda = which === "agenda";
+  viewAgenda.classList.toggle("hidden", !isAgenda);
+  viewArchivados.classList.toggle("hidden", isAgenda);
+
+  tabAgenda.classList.toggle("bg-blush-600", isAgenda);
+  tabAgenda.classList.toggle("text-white", isAgenda);
+  tabAgenda.classList.toggle("border", !isAgenda);
+
+  tabArchivados.classList.toggle("bg-blush-600", !isAgenda);
+  tabArchivados.classList.toggle("text-white", !isAgenda);
+  tabArchivados.classList.toggle("border", isAgenda);
+
+  if(!isAgenda) loadArchivados();
+  localStorage.setItem("tn_tab", which);
+}
+
+tabAgenda.addEventListener("click", ()=>setTab("agenda"));
+tabArchivados.addEventListener("click", ()=>setTab("archivados"));
+
+/** =========================
+ *  ARCHIVADOS
+ *  ========================= */
+const archList = document.getElementById("archList");
+const archEmpty = document.getElementById("archEmpty");
+const archSearch = document.getElementById("archSearch");
+
+document.getElementById("btnArchReload").addEventListener("click", loadArchivados);
+archSearch.addEventListener("input", ()=>renderArchivados(window._archData||[]));
+
+async function loadArchivados(){
+  try{
+    // si todavía no creaste este endpoint, te va a fallar y te lo avisa
+    const data = await fetchJSON(API.GET_ARCHIVADOS);
+    window._archData = Array.isArray(data) ? data : (data?.data || []);
+    renderArchivados(window._archData);
+  }catch(e){
+    console.warn(e);
+    archList.innerHTML = "";
+    archEmpty.classList.remove("hidden");
+    archEmpty.textContent = "No se pudo cargar Archivados. (Creá el webhook agenda-archivados en n8n)";
+  }
+}
+
+function badgeEstado(estado){
+  const st = String(estado||"").toLowerCase();
+  if(st === "cancelado") return `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">Cancelado</span>`;
+  if(st === "archivado") return `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">Archivado</span>`;
+  return `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">${estado||"Pasado"}</span>`;
+}
+
+function renderArchivados(data){
+  const q = archSearch.value.trim().toLowerCase();
+  const filtered = data.filter(t=>{
+    const hay = `${t.cliente_nombre||""} ${t.cliente_telefono||""} ${t.servicio||""}`.toLowerCase();
+    return !q || hay.includes(q);
+  });
+
+  archList.innerHTML = "";
+  archEmpty.classList.toggle("hidden", filtered.length > 0);
+
+  // agrupar por fecha
+  const groups = new Map();
+  for(const t of filtered){
+    const d = formatDateInTZ(new Date(t.fecha_inicio));
+    if(!groups.has(d)) groups.set(d, []);
+    groups.get(d).push(t);
+  }
+
+  const dates = Array.from(groups.keys()).sort().reverse();
+
+  for(const d of dates){
+    const card = document.createElement("div");
+    card.className = "bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden";
+
+    const items = groups.get(d)
+      .sort((a,b)=> new Date(a.fecha_inicio)-new Date(b.fecha_inicio))
+      .map(t=>{
+        const s = new Date(t.fecha_inicio);
+        const hh = formatTimeInTZ(s);
+        const serv = t.servicio || "A definir";
+        const name = t.cliente_nombre || "Sin nombre";
+        const tel = t.cliente_telefono ? String(t.cliente_telefono) : "";
+        return `
+          <div class="px-4 py-3 flex items-start justify-between gap-3 border-t border-slate-100">
+            <div>
+              <div class="font-extrabold">${hh} · ${name}</div>
+              <div class="text-sm text-slate-600">${serv}${tel ? " · " + tel : ""}</div>
+            </div>
+            <div class="shrink-0">${badgeEstado(t.estado || "pasado")}</div>
+          </div>
+        `;
+      }).join("");
+
+    card.innerHTML = `
+      <div class="px-4 py-3 bg-blush-50 border-b border-slate-100 font-extrabold">${d}</div>
+      ${items}
+    `;
+
+    archList.appendChild(card);
+  }
+}
+
+/** =========================
+ *  Buttons
+ *  ========================= */
+document.getElementById("btnNuevo").addEventListener("click", ()=>openModalCreate());
+document.getElementById("fab").addEventListener("click", ()=>openModalCreate());
+
+/** =========================
+ *  Init
+ *  ========================= */
+(async function(){
+  await initCalendar();
+  const savedTab = localStorage.getItem("tn_tab") || "agenda";
+  setTab(savedTab);
+})();
+</script>
 </body>
 </html>
