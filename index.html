@@ -30,19 +30,19 @@
     }
   </script>
 
-  <!-- FullCalendar (global bundle incluye dayGrid/timeGrid/list/interaction) -->
+  <!-- FullCalendar (bundle global: dayGrid/timeGrid/list/interaction) -->
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 
   <style>
     /* FullCalendar: toque minimalista */
-    .fc .fc-toolbar-title { font-size: 1.05rem; font-weight: 700; }
-    .fc .fc-button { border-radius: 0.75rem; border: 0; }
+    .fc .fc-toolbar-title { font-size: 1.05rem; font-weight: 800; }
+    .fc .fc-button { border-radius: 0.9rem; border: 0; font-weight: 800; }
     .fc .fc-button-primary { background: #f43f8f; }
     .fc .fc-button-primary:not(:disabled):active,
     .fc .fc-button-primary:not(:disabled).fc-button-active { background: #e11d79; }
-    .fc .fc-timegrid-slot { height: 2.6rem; } /* mobile-friendly */
-    .fc .fc-event { border-radius: 0.75rem; border: 0; }
-    .fc .fc-event-title { font-weight: 700; }
+    .fc .fc-timegrid-slot { height: 2.6rem; }
+    .fc .fc-event { border-radius: 0.9rem; border: 0; }
+    .fc .fc-event-title { font-weight: 800; }
   </style>
 </head>
 
@@ -63,12 +63,12 @@
 
       <div class="flex items-center gap-2">
         <button id="tabAgenda"
-          class="px-3 py-2 rounded-xl text-sm font-bold bg-blush-600 text-white shadow-sm hover:bg-blush-700">
+          class="px-3 py-2 rounded-xl text-sm font-black bg-blush-600 text-white shadow-sm hover:bg-blush-700">
           Agenda
         </button>
-        <button id="tabArchivados"
-          class="px-3 py-2 rounded-xl text-sm font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50">
-          Archivados
+        <button id="tabPasados"
+          class="px-3 py-2 rounded-xl text-sm font-black bg-white text-slate-700 border border-slate-200 hover:bg-slate-50">
+          Pasados
         </button>
       </div>
     </div>
@@ -94,29 +94,27 @@
       </div>
     </section>
 
-    <!-- Archivados -->
-    <section id="viewArchivados" class="hidden space-y-3">
+    <!-- Pasados (opcional) -->
+    <section id="viewPasados" class="hidden space-y-3">
       <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4">
         <div class="flex flex-col sm:flex-row sm:items-end gap-3 sm:justify-between">
           <div>
-            <div class="font-extrabold text-lg">Archivados</div>
-            <div class="text-sm text-slate-600">Turnos pasados o cancelados.</div>
+            <div class="font-extrabold text-lg">Pasados</div>
+            <div class="text-sm text-slate-600">Turnos anteriores (no incluye cancelados: esos se eliminan).</div>
           </div>
           <div class="flex items-center gap-2">
-            <input id="archSearch" type="search" placeholder="Buscar (nombre / tel / servicio)…"
+            <input id="pastSearch" type="search" placeholder="Buscar (nombre / tel / servicio)…"
               class="w-full sm:w-80 px-3 py-2 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blush-200" />
-            <button id="btnArchReload"
-              class="px-3 py-2 rounded-2xl border border-slate-200 hover:bg-slate-50 font-bold">
+            <button id="btnPastReload"
+              class="px-3 py-2 rounded-2xl border border-slate-200 hover:bg-slate-50 font-black">
               Actualizar
             </button>
           </div>
         </div>
       </div>
 
-      <div id="archList" class="space-y-2"></div>
-      <div id="archEmpty" class="hidden text-center text-slate-500 py-10">
-        No hay archivados para mostrar.
-      </div>
+      <div id="pastList" class="space-y-2"></div>
+      <div id="pastEmpty" class="hidden text-center text-slate-500 py-10"></div>
     </section>
   </main>
 
@@ -141,19 +139,19 @@
 
         <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <label class="block">
-            <div class="text-xs font-bold text-slate-600 mb-1">Cliente</div>
+            <div class="text-xs font-black text-slate-600 mb-1">Cliente</div>
             <input id="fNombre" type="text" placeholder="Nombre"
               class="w-full px-3 py-2 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blush-200" />
           </label>
 
           <label class="block">
-            <div class="text-xs font-bold text-slate-600 mb-1">Teléfono</div>
+            <div class="text-xs font-black text-slate-600 mb-1">Teléfono</div>
             <input id="fTelefono" type="tel" placeholder="Ej: 2314..."
               class="w-full px-3 py-2 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blush-200" />
           </label>
 
           <label class="block sm:col-span-2">
-            <div class="text-xs font-bold text-slate-600 mb-1">Servicio</div>
+            <div class="text-xs font-black text-slate-600 mb-1">Servicio</div>
             <select id="fServicio"
               class="w-full px-3 py-2 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blush-200">
               <option value="A definir">A definir</option>
@@ -169,13 +167,13 @@
           </label>
 
           <label class="block">
-            <div class="text-xs font-bold text-slate-600 mb-1">Fecha</div>
+            <div class="text-xs font-black text-slate-600 mb-1">Fecha</div>
             <input id="fFecha" type="date"
               class="w-full px-3 py-2 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blush-200" />
           </label>
 
           <div class="block">
-            <div class="text-xs font-bold text-slate-600 mb-1">Hora (slots)</div>
+            <div class="text-xs font-black text-slate-600 mb-1">Hora (slots)</div>
             <div id="slots" class="grid grid-cols-3 gap-2"></div>
             <div id="slotsHint" class="text-xs text-slate-500 mt-2"></div>
           </div>
@@ -183,13 +181,13 @@
 
         <div class="mt-4 flex items-center justify-between gap-2">
           <button id="btnDelete"
-            class="hidden px-3 py-2 rounded-2xl border border-slate-200 hover:bg-slate-50 font-bold text-slate-700">
-            Cancelar turno
+            class="hidden px-3 py-2 rounded-2xl border border-slate-200 hover:bg-slate-50 font-black text-slate-700">
+            Eliminar turno
           </button>
 
           <div class="ml-auto flex items-center gap-2">
             <button id="btnWhats"
-              class="hidden px-3 py-2 rounded-2xl border border-slate-200 hover:bg-slate-50 font-bold">
+              class="hidden px-3 py-2 rounded-2xl border border-slate-200 hover:bg-slate-50 font-black">
               WhatsApp
             </button>
 
@@ -200,7 +198,7 @@
           </div>
         </div>
 
-        <div id="modalError" class="hidden mt-3 text-sm text-red-600 font-semibold"></div>
+        <div id="modalError" class="hidden mt-3 text-sm text-red-600 font-black"></div>
       </div>
     </div>
   </div>
@@ -213,16 +211,15 @@
  *  CONFIG
  *  ========================= */
 const API = {
-  // GET agenda (tu workflow actual)
-  GET_AGENDA: "https://prueba-turnos-n8n.feygzx.easypanel.host/webhook/aa8029ab-b2b0-4878-94ce-09ae6f07b24e",
-
-  // CRUD (tu workflow actual)
+  GET_AGENDA: "https://prueba-turnos-n8n.feygzx.easypanel.host/webhook/aa8029ab-3f39-497e-944b-b79f7456eb59",
   CREAR: "https://prueba-turnos-n8n.feygzx.easypanel.host/webhook/agenda-crear",
   EDITAR: "https://prueba-turnos-n8n.feygzx.easypanel.host/webhook/agenda-editar",
   ELIMINAR: "https://prueba-turnos-n8n.feygzx.easypanel.host/webhook/agenda-eliminar",
 
-  // (recomendado) nuevo endpoint para archivados:
-  GET_ARCHIVADOS: "https://prueba-turnos-n8n.feygzx.easypanel.host/webhook/agenda-archivados"
+  // Opcional: si más adelante querés “Pasados” desde backend.
+  // Si no lo creás, la pestaña igual funciona calculando pasados desde GET_AGENDA
+  // (pero dependerá de qué devuelve tu GET: si solo activos, no habrá pasados).
+  GET_PASADOS: "" // ej: https://.../webhook/agenda-pasados
 };
 
 const TZ = "America/Argentina/Buenos_Aires";
@@ -278,15 +275,14 @@ function addMinutes(hhmm, mins){
   return minutesToTime(timeToMinutes(hhmm)+mins);
 }
 
-/** Construye "YYYY-MM-DD HH:mm:ss" sin convertir a UTC */
+/** Construye "YYYY-MM-DD HH:mm:ss" (sin convertir a UTC) */
 function toPgTimestamp(dateYYYYMMDD, hhmm){
   return `${dateYYYYMMDD} ${hhmm}:00`;
 }
 
 function dayOfWeekFromDateYYYYMMDD(dateStr){
-  // Interpretamos como fecha local (no UTC) evitando corrimientos: YYYY-MM-DD
   const [y,m,d]=dateStr.split("-").map(Number);
-  const dt = new Date(y, m-1, d, 12, 0, 0); // mediodía evita edge cases DST
+  const dt = new Date(y, m-1, d, 12, 0, 0); // mediodía evita edge cases
   return dt.getDay();
 }
 
@@ -298,7 +294,6 @@ function buildSlotsForDate(dateYYYYMMDD){
   for(const b of blocks){
     const startMin = timeToMinutes(b.start);
     const endMin = timeToMinutes(b.end);
-    // último inicio permitido = end - 60
     for(let t=startMin; t<=endMin - DURACION_MIN; t+=DURACION_MIN){
       slots.push(minutesToTime(t));
     }
@@ -311,12 +306,12 @@ function buildSlotsForDate(dateYYYYMMDD){
  *  ========================= */
 let calendar;
 let eventsCache = []; // raw fetched
-let eventById = new Map(); // id -> event
-let occupiedByDate = new Map(); // YYYY-MM-DD -> Set("HH:mm")
+let eventById = new Map();
+let occupiedByDate = new Map(); // YYYY-MM-DD -> Set(HH:mm)
 
 let modalMode = "create"; // create|edit
 let editingId = null;
-let selectedSlot = null; // "HH:mm"
+let selectedSlot = null;
 
 /** =========================
  *  TOAST
@@ -378,7 +373,7 @@ function openModalCreate({dateYYYYMMDD, hhmm}={}){
 
 function openModalEdit(turno){
   modalMode = "edit";
-  editingId = turno.id;
+  editingId = String(turno.id);
   modalTitle.textContent = "Editar turno";
   btnDelete.classList.remove("hidden");
   btnWhats.classList.remove("hidden");
@@ -387,6 +382,7 @@ function openModalEdit(turno){
 
   fNombre.value = turno.cliente_nombre || "";
   fTelefono.value = turno.cliente_telefono || "";
+
   const serv = turno.servicio || "A definir";
   if(["A definir","Semipermanente","Kapping","Esculpidas","Retirado","Reparación"].includes(serv)){
     fServicio.value = serv;
@@ -398,7 +394,6 @@ function openModalEdit(turno){
     fServicioOtro.classList.remove("hidden");
   }
 
-  // Fecha/hora desde start
   const startDate = new Date(turno.fecha_inicio);
   const dateYYYYMMDD = formatDateInTZ(startDate);
   const hhmm = formatTimeInTZ(startDate);
@@ -406,7 +401,6 @@ function openModalEdit(turno){
   fFecha.value = dateYYYYMMDD;
   selectedSlot = hhmm;
 
-  // WhatsApp quick action
   const tel = (turno.cliente_telefono || "").replace(/\D/g,"");
   btnWhats.onclick = () => {
     if(!tel) return toast("No hay teléfono.");
@@ -447,13 +441,9 @@ function getServicioFinal(){
 function computeOccupied(){
   occupiedByDate.clear();
   for(const t of eventsCache){
-    // Solo activos para colisiones
-    if(String(t.estado||"activo").toLowerCase() !== "activo") continue;
-
     const s = new Date(t.fecha_inicio);
     const d = formatDateInTZ(s);
     const hhmm = formatTimeInTZ(s);
-
     if(!occupiedByDate.has(d)) occupiedByDate.set(d, new Set());
     occupiedByDate.get(d).add(hhmm);
   }
@@ -474,7 +464,7 @@ function renderSlots(){
   const occ = occupiedByDate.get(date) || new Set();
 
   for(const hhmm of slots){
-    // en edit, permitimos el slot actual aunque esté ocupado por ese mismo turno
+    // En edit: permitimos el slot actual, aunque esté ocupado por el mismo turno
     let isOccupied = occ.has(hhmm);
     if(modalMode === "edit" && selectedSlot === hhmm) isOccupied = false;
 
@@ -494,8 +484,8 @@ function renderSlots(){
     } else {
       cls += " bg-white text-slate-800 border-slate-200 hover:bg-blush-50 hover:border-blush-200";
     }
-    btn.className = cls;
 
+    btn.className = cls;
     btn.addEventListener("click", ()=>{
       selectedSlot = hhmm;
       renderSlots();
@@ -505,7 +495,7 @@ function renderSlots(){
   }
 
   const occCount = (occupiedByDate.get(date)?.size || 0);
-  slotsHint.textContent = `Disponibles: ${slots.length - occCount} · Ocupados: ${occCount}`;
+  slotsHint.textContent = `Disponibles: ${Math.max(0, slots.length - occCount)} · Ocupados: ${occCount}`;
 }
 
 /** =========================
@@ -517,7 +507,6 @@ async function fetchJSON(url, opts={}){
     ...opts,
   });
 
-  // n8n a veces responde 200 con texto; intentamos parsear
   const text = await res.text();
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch { data = text; }
@@ -532,12 +521,8 @@ async function fetchJSON(url, opts={}){
   return data;
 }
 
-/** FullCalendar pide rango, pero tu endpoint actual devuelve "desde hoy".
- *  Igual lo usamos y refrescamos, y te recomiendo abajo cómo hacerlo por rango.
- */
 async function loadAgenda(){
   const data = await fetchJSON(API.GET_AGENDA);
-  // data debería ser array de turnos
   eventsCache = Array.isArray(data) ? data : (data?.data || []);
   eventById.clear();
   for(const t of eventsCache){
@@ -568,9 +553,9 @@ function buildEventTitle(t){
 }
 
 function eventColor(t){
-  const serv = String(t.servicio||"A definir").toLowerCase();
-  if(serv === "a definir") return { bg:"#e5e7eb", text:"#111827" }; // gris
-  return { bg:"#f43f8f", text:"#ffffff" }; // blush
+  const serv = String(t.servicio||"A definir").trim().toLowerCase();
+  if(serv === "a definir") return { bg:"#e5e7eb", text:"#111827" };
+  return { bg:"#f43f8f", text:"#ffffff" };
 }
 
 function toFullCalendarEvent(t){
@@ -615,21 +600,16 @@ async function initCalendar(){
       : { left: "prev,next today", center: "title", right: "timeGridWeek,timeGridDay,listWeek" },
 
     businessHours: [
-      // Lun/Mié/Vie
       { daysOfWeek:[1,3,5], startTime:"10:00", endTime:"12:00" },
       { daysOfWeek:[1,3,5], startTime:"14:30", endTime:"20:30" },
-      // Mar/Jue
       { daysOfWeek:[2,4], startTime:"10:00", endTime:"12:00" },
       { daysOfWeek:[2,4], startTime:"15:30", endTime:"20:30" },
     ],
 
-    // Fuente de eventos: cache local + refresh con refetch
     events: async (info, success, failure) => {
       try{
         await loadAgenda();
-        const events = eventsCache
-          .filter(t => String(t.estado||"activo").toLowerCase() === "activo")
-          .map(toFullCalendarEvent);
+        const events = eventsCache.map(toFullCalendarEvent);
         success(events);
       }catch(e){
         console.error(e);
@@ -639,7 +619,6 @@ async function initCalendar(){
     },
 
     dateClick: (info) => {
-      // Si clickeó en timeGrid (tiene hora)
       const date = info.date;
       const dateYYYYMMDD = formatDateInTZ(date);
       const hhmm = formatTimeInTZ(date);
@@ -648,7 +627,7 @@ async function initCalendar(){
       if(!slots.includes(hhmm)){
         return toast("Elegí un slot válido (según horario).");
       }
-      // colisión?
+
       const occ = occupiedByDate.get(dateYYYYMMDD) || new Set();
       if(occ.has(hhmm)){
         return toast("Ese horario ya está ocupado.");
@@ -658,14 +637,13 @@ async function initCalendar(){
     },
 
     selectAllow: (selectInfo) => {
-      // Solo permitimos selección exacta 1h y que el inicio sea un slot válido
       const start = selectInfo.start;
       const end = selectInfo.end;
 
       const startD = formatDateInTZ(start);
       const startT = formatTimeInTZ(start);
-
       const diffMin = Math.round((end - start)/60000);
+
       if(diffMin !== DURACION_MIN) return false;
 
       const slots = buildSlotsForDate(startD);
@@ -697,14 +675,23 @@ async function initCalendar(){
       const wrap = document.createElement("div");
       wrap.className = "px-2 py-1";
       wrap.innerHTML = `
-        <div class="text-xs font-black leading-tight">${name}</div>
-        <div class="text-[11px] opacity-90 leading-tight">${serv}${tel ? " · " + tel : ""}</div>
+        <div class="text-xs font-black leading-tight">${escapeHtml(name)}</div>
+        <div class="text-[11px] opacity-90 leading-tight">${escapeHtml(serv)}${tel ? " · " + escapeHtml(tel) : ""}</div>
       `;
       return { domNodes:[wrap] };
     },
   });
 
   calendar.render();
+}
+
+function escapeHtml(str){
+  return String(str)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 /** =========================
@@ -724,16 +711,14 @@ async function onSave(){
   if(!hhmm) return setModalError("Elegí un horario (slot).");
   if(!nombre) return setModalError("Falta el nombre del cliente.");
 
-  // Validación de horario por reglas
   const validSlots = buildSlotsForDate(fecha);
   if(!validSlots.includes(hhmm)) return setModalError("Horario inválido para ese día.");
 
-  // Colisión (frontend)
+  // colisión (frontend)
   const occ = occupiedByDate.get(fecha) || new Set();
-  const collides = occ.has(hhmm) && !(modalMode==="edit" && hhmm===selectedSlot);
-  if(collides) return setModalError("Ese horario ya está ocupado.");
+  const isOccupied = occ.has(hhmm);
+  if(modalMode === "create" && isOccupied) return setModalError("Ese horario ya está ocupado.");
 
-  // Construimos inicio/fin como strings (sin UTC)
   const inicio = toPgTimestamp(fecha, hhmm);
   const fin = toPgTimestamp(fecha, addMinutes(hhmm, DURACION_MIN));
 
@@ -748,7 +733,6 @@ async function onSave(){
         servicio,
         fecha_inicio: inicio,
         fecha_fin: fin,
-        estado: "activo",
       });
       toast("Turno creado ✅");
     } else {
@@ -764,11 +748,10 @@ async function onSave(){
     }
 
     closeModal();
-    calendar.refetchEvents(); // sync inmediato
+    calendar.refetchEvents();
   }catch(e){
     console.error(e);
-    if(e.status === 409) setModalError("Ese horario ya está ocupado (colisión).");
-    else setModalError(e.message || "Error guardando.");
+    setModalError(e.message || "Error guardando.");
   }finally{
     btnSave.disabled = false;
     btnSave.classList.remove("opacity-70");
@@ -779,16 +762,16 @@ btnSave.addEventListener("click", onSave);
 
 btnDelete.addEventListener("click", async ()=>{
   if(!editingId) return;
-  if(!confirm("¿Cancelar este turno?")) return;
+  if(!confirm("¿Eliminar este turno?")) return;
 
   try{
     await deleteTurno(editingId);
-    toast("Turno cancelado ✅");
+    toast("Turno eliminado ✅");
     closeModal();
     calendar.refetchEvents();
   }catch(e){
     console.error(e);
-    setModalError(e.message || "Error cancelando.");
+    setModalError(e.message || "Error eliminando.");
   }
 });
 
@@ -796,72 +779,100 @@ btnDelete.addEventListener("click", async ()=>{
  *  TABS
  *  ========================= */
 const tabAgenda = document.getElementById("tabAgenda");
-const tabArchivados = document.getElementById("tabArchivados");
+const tabPasados = document.getElementById("tabPasados");
 const viewAgenda = document.getElementById("viewAgenda");
-const viewArchivados = document.getElementById("viewArchivados");
+const viewPasados = document.getElementById("viewPasados");
 
 function setTab(which){
   const isAgenda = which === "agenda";
+
   viewAgenda.classList.toggle("hidden", !isAgenda);
-  viewArchivados.classList.toggle("hidden", isAgenda);
+  viewPasados.classList.toggle("hidden", isAgenda);
 
   tabAgenda.classList.toggle("bg-blush-600", isAgenda);
   tabAgenda.classList.toggle("text-white", isAgenda);
-  tabAgenda.classList.toggle("border", !isAgenda);
 
-  tabArchivados.classList.toggle("bg-blush-600", !isAgenda);
-  tabArchivados.classList.toggle("text-white", !isAgenda);
-  tabArchivados.classList.toggle("border", isAgenda);
+  tabPasados.classList.toggle("bg-blush-600", !isAgenda);
+  tabPasados.classList.toggle("text-white", !isAgenda);
 
-  if(!isAgenda) loadArchivados();
+  if(!isAgenda) loadPasados();
   localStorage.setItem("tn_tab", which);
 }
 
 tabAgenda.addEventListener("click", ()=>setTab("agenda"));
-tabArchivados.addEventListener("click", ()=>setTab("archivados"));
+tabPasados.addEventListener("click", ()=>setTab("pasados"));
 
 /** =========================
- *  ARCHIVADOS
+ *  PASADOS (opcional)
  *  ========================= */
-const archList = document.getElementById("archList");
-const archEmpty = document.getElementById("archEmpty");
-const archSearch = document.getElementById("archSearch");
+const pastList = document.getElementById("pastList");
+const pastEmpty = document.getElementById("pastEmpty");
+const pastSearch = document.getElementById("pastSearch");
 
-document.getElementById("btnArchReload").addEventListener("click", loadArchivados);
-archSearch.addEventListener("input", ()=>renderArchivados(window._archData||[]));
+document.getElementById("btnPastReload").addEventListener("click", loadPasados);
+pastSearch.addEventListener("input", ()=>renderPasados(window._pastData||[]));
 
-async function loadArchivados(){
+async function loadPasados(){
   try{
-    // si todavía no creaste este endpoint, te va a fallar y te lo avisa
-    const data = await fetchJSON(API.GET_ARCHIVADOS);
-    window._archData = Array.isArray(data) ? data : (data?.data || []);
-    renderArchivados(window._archData);
+    // 1) Si configurás API.GET_PASADOS, se usa eso.
+    // 2) Si no, intentamos derivarlos del GET_AGENDA (si tu GET devuelve todos).
+    let data = null;
+
+    if(API.GET_PASADOS && API.GET_PASADOS.trim()){
+      data = await fetchJSON(API.GET_PASADOS);
+    } else {
+      data = await fetchJSON(API.GET_AGENDA);
+    }
+
+    const arr = Array.isArray(data) ? data : (data?.data || []);
+
+    // Filtramos "pasados" por fecha_fin < ahora (en TZ)
+    const now = new Date();
+    const nowYMD = formatDateInTZ(now);
+    const nowHM = formatTimeInTZ(now);
+    const nowKey = `${nowYMD} ${nowHM}:00`;
+
+    // Comparación simple de strings funciona si ambos están en "YYYY-MM-DD HH:mm:ss"
+    // Si tu backend devuelve ISO, igual funciona porque Date(t.fecha_fin) se parsea.
+    const past = arr.filter(t => {
+      const fin = t.fecha_fin;
+      if(!fin) return false;
+
+      // Caso 1: ya viene "YYYY-MM-DD HH:mm:ss"
+      if(typeof fin === "string" && fin.includes(" ")){
+        return fin < nowKey;
+      }
+
+      // Caso 2: ISO
+      const dt = new Date(fin);
+      return dt < now;
+    });
+
+    window._pastData = past;
+    renderPasados(past);
   }catch(e){
     console.warn(e);
-    archList.innerHTML = "";
-    archEmpty.classList.remove("hidden");
-    archEmpty.textContent = "No se pudo cargar Archivados. (Creá el webhook agenda-archivados en n8n)";
+    pastList.innerHTML = "";
+    pastEmpty.classList.remove("hidden");
+    pastEmpty.textContent = "No se pudo cargar Pasados. (Opcional: agregá un webhook agenda-pasados en n8n).";
   }
 }
 
-function badgeEstado(estado){
-  const st = String(estado||"").toLowerCase();
-  if(st === "cancelado") return `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">Cancelado</span>`;
-  if(st === "archivado") return `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">Archivado</span>`;
-  return `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">${estado||"Pasado"}</span>`;
-}
-
-function renderArchivados(data){
-  const q = archSearch.value.trim().toLowerCase();
+function renderPasados(data){
+  const q = pastSearch.value.trim().toLowerCase();
   const filtered = data.filter(t=>{
     const hay = `${t.cliente_nombre||""} ${t.cliente_telefono||""} ${t.servicio||""}`.toLowerCase();
     return !q || hay.includes(q);
   });
 
-  archList.innerHTML = "";
-  archEmpty.classList.toggle("hidden", filtered.length > 0);
+  pastList.innerHTML = "";
+  pastEmpty.classList.toggle("hidden", filtered.length > 0);
 
-  // agrupar por fecha
+  if(filtered.length === 0){
+    pastEmpty.textContent = "No hay turnos pasados para mostrar.";
+    return;
+  }
+
   const groups = new Map();
   for(const t of filtered){
     const d = formatDateInTZ(new Date(t.fecha_inicio));
@@ -886,20 +897,19 @@ function renderArchivados(data){
         return `
           <div class="px-4 py-3 flex items-start justify-between gap-3 border-t border-slate-100">
             <div>
-              <div class="font-extrabold">${hh} · ${name}</div>
-              <div class="text-sm text-slate-600">${serv}${tel ? " · " + tel : ""}</div>
+              <div class="font-extrabold">${escapeHtml(hh)} · ${escapeHtml(name)}</div>
+              <div class="text-sm text-slate-600">${escapeHtml(serv)}${tel ? " · " + escapeHtml(tel) : ""}</div>
             </div>
-            <div class="shrink-0">${badgeEstado(t.estado || "pasado")}</div>
           </div>
         `;
       }).join("");
 
     card.innerHTML = `
-      <div class="px-4 py-3 bg-blush-50 border-b border-slate-100 font-extrabold">${d}</div>
+      <div class="px-4 py-3 bg-blush-50 border-b border-slate-100 font-extrabold">${escapeHtml(d)}</div>
       ${items}
     `;
 
-    archList.appendChild(card);
+    pastList.appendChild(card);
   }
 }
 
