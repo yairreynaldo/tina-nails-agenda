@@ -1,3 +1,4 @@
+```html
 <!doctype html>
 <html lang="es">
 <head>
@@ -217,8 +218,6 @@ const API = {
   ELIMINAR: "https://prueba-turnos-n8n.feygzx.easypanel.host/webhook/agenda-eliminar",
 
   // Opcional: si más adelante querés “Pasados” desde backend.
-  // Si no lo creás, la pestaña igual funciona calculando pasados desde GET_AGENDA
-  // (pero dependerá de qué devuelve tu GET: si solo activos, no habrá pasados).
   GET_PASADOS: "" // ej: https://.../webhook/agenda-pasados
 };
 
@@ -242,20 +241,35 @@ const HORARIOS = {
  *  ========================= */
 function pad2(n){ return String(n).padStart(2,"0"); }
 
+function safeDate(d){
+  // devuelve Date o null
+  if(d instanceof Date){
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  const nd = new Date(d);
+  return Number.isNaN(nd.getTime()) ? null : nd;
+}
+
 function formatDateInTZ(date, timeZone=TZ){
+  const d = safeDate(date);
+  if(!d) throw new RangeError("Invalid time value");
+
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone, year:"numeric", month:"2-digit", day:"2-digit"
-  }).formatToParts(date);
+  }).formatToParts(d);
   const y = parts.find(p=>p.type==="year").value;
   const m = parts.find(p=>p.type==="month").value;
-  const d = parts.find(p=>p.type==="day").value;
-  return `${y}-${m}-${d}`;
+  const dd = parts.find(p=>p.type==="day").value;
+  return `${y}-${m}-${dd}`;
 }
 
 function formatTimeInTZ(date, timeZone=TZ){
+  const d = safeDate(date);
+  if(!d) throw new RangeError("Invalid time value");
+
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone, hour:"2-digit", minute:"2-digit", hour12:false
-  }).formatToParts(date);
+  }).formatToParts(d);
   const hh = parts.find(p=>p.type==="hour").value;
   const mm = parts.find(p=>p.type==="minute").value;
   return `${hh}:${mm}`;
@@ -302,11 +316,63 @@ function buildSlotsForDate(dateYYYYMMDD){
 }
 
 /** =========================
+ *  NORMALIZACIÓN DE RESPUESTA GET
+ *
+ *  Tu GET actual devuelve:
+ *  [ { ok:true, data:[ {id,title,start,end,classNames,extendedProps}... ], count:n } ]
+ *
+ *  La UI internamente trabaja con:
+ *  { id, fecha_inicio, fecha_fin, cliente_nombre, cliente_telefono, servicio }
+ *  ========================= */
+function normalizeAgendaResponse(raw){
+  // 1) Caso ideal: { ok:true, data:[...] }
+  if(raw && !Array.isArray(raw) && Array.isArray(raw.data)){
+    return raw.data;
+  }
+
+  // 2) Caso actual n8n: [ { ok:true, data:[...] } ]
+  if(Array.isArray(raw) && raw.length && raw[0] && Array.isArray(raw[0].data)){
+    return raw[0].data;
+  }
+
+  // 3) Caso: devuelve directamente un array de turnos
+  if(Array.isArray(raw)){
+    return raw;
+  }
+
+  // 4) Fallback
+  return [];
+}
+
+function normalizeTurno(item){
+  // Si ya viene del SQL (fecha_inicio/fecha_fin)
+  if(item && (item.fecha_inicio || item.fecha_fin)){
+    return {
+      id: item.id,
+      fecha_inicio: item.fecha_inicio,
+      fecha_fin: item.fecha_fin,
+      cliente_nombre: item.cliente_nombre ?? item.extendedProps?.cliente_nombre ?? "",
+      cliente_telefono: item.cliente_telefono ?? item.extendedProps?.cliente_telefono ?? "",
+      servicio: item.servicio ?? item.extendedProps?.servicio ?? "A definir",
+    };
+  }
+
+  // Si viene como FullCalendar event (start/end + extendedProps)
+  return {
+    id: item.id,
+    fecha_inicio: item.start,
+    fecha_fin: item.end,
+    cliente_nombre: item.extendedProps?.cliente_nombre ?? "",
+    cliente_telefono: item.extendedProps?.cliente_telefono ?? "",
+    servicio: item.extendedProps?.servicio ?? "A definir",
+  };
+}
+
+/** =========================
  *  UI state
  *  ========================= */
 let calendar;
-let eventsCache = []; // raw fetched
-let eventById = new Map();
+let eventsCache = []; // normalizados
 let occupiedByDate = new Map(); // YYYY-MM-DD -> Set(HH:mm)
 
 let modalMode = "create"; // create|edit
@@ -394,7 +460,12 @@ function openModalEdit(turno){
     fServicioOtro.classList.remove("hidden");
   }
 
-  const startDate = new Date(turno.fecha_inicio);
+  const startDate = safeDate(turno.fecha_inicio);
+  if(!startDate){
+    toast("Turno inválido (fecha_inicio)");
+    return;
+  }
+
   const dateYYYYMMDD = formatDateInTZ(startDate);
   const hhmm = formatTimeInTZ(startDate);
 
@@ -440,10 +511,14 @@ function getServicioFinal(){
 
 function computeOccupied(){
   occupiedByDate.clear();
+
   for(const t of eventsCache){
-    const s = new Date(t.fecha_inicio);
+    const s = safeDate(t.fecha_inicio);
+    if(!s) continue;
+
     const d = formatDateInTZ(s);
     const hhmm = formatTimeInTZ(s);
+
     if(!occupiedByDate.has(d)) occupiedByDate.set(d, new Set());
     occupiedByDate.get(d).add(hhmm);
   }
@@ -522,12 +597,13 @@ async function fetchJSON(url, opts={}){
 }
 
 async function loadAgenda(){
-  const data = await fetchJSON(API.GET_AGENDA);
-  eventsCache = Array.isArray(data) ? data : (data?.data || []);
-  eventById.clear();
-  for(const t of eventsCache){
-    eventById.set(String(t.id), t);
-  }
+  const raw = await fetchJSON(API.GET_AGENDA);
+
+  const arr = normalizeAgendaResponse(raw);
+
+  // Normalizamos a estructura interna
+  eventsCache = arr.map(normalizeTurno);
+
   computeOccupied();
 }
 
@@ -567,7 +643,7 @@ function toFullCalendarEvent(t){
     end: t.fecha_fin,
     backgroundColor: col.bg,
     textColor: col.text,
-    extendedProps: t
+    extendedProps: t,
   };
 }
 
@@ -609,8 +685,7 @@ async function initCalendar(){
     events: async (info, success, failure) => {
       try{
         await loadAgenda();
-        const events = eventsCache.map(toFullCalendarEvent);
-        success(events);
+        success(eventsCache.map(toFullCalendarEvent));
       }catch(e){
         console.error(e);
         failure(e);
@@ -625,7 +700,7 @@ async function initCalendar(){
 
       const slots = buildSlotsForDate(dateYYYYMMDD);
       if(!slots.includes(hhmm)){
-        return toast("Elegí un slot válido (según horario).");
+        return toast("Elegí un slot válido (según horario). ");
       }
 
       const occ = occupiedByDate.get(dateYYYYMMDD) || new Set();
@@ -814,38 +889,23 @@ pastSearch.addEventListener("input", ()=>renderPasados(window._pastData||[]));
 
 async function loadPasados(){
   try{
-    // 1) Si configurás API.GET_PASADOS, se usa eso.
-    // 2) Si no, intentamos derivarlos del GET_AGENDA (si tu GET devuelve todos).
-    let data = null;
+    let raw = null;
 
     if(API.GET_PASADOS && API.GET_PASADOS.trim()){
-      data = await fetchJSON(API.GET_PASADOS);
+      raw = await fetchJSON(API.GET_PASADOS);
     } else {
-      data = await fetchJSON(API.GET_AGENDA);
+      raw = await fetchJSON(API.GET_AGENDA);
     }
 
-    const arr = Array.isArray(data) ? data : (data?.data || []);
+    const arr = normalizeAgendaResponse(raw).map(normalizeTurno);
 
-    // Filtramos "pasados" por fecha_fin < ahora (en TZ)
+    // Filtramos "pasados" por fecha_fin < ahora
     const now = new Date();
-    const nowYMD = formatDateInTZ(now);
-    const nowHM = formatTimeInTZ(now);
-    const nowKey = `${nowYMD} ${nowHM}:00`;
 
-    // Comparación simple de strings funciona si ambos están en "YYYY-MM-DD HH:mm:ss"
-    // Si tu backend devuelve ISO, igual funciona porque Date(t.fecha_fin) se parsea.
     const past = arr.filter(t => {
-      const fin = t.fecha_fin;
+      const fin = safeDate(t.fecha_fin);
       if(!fin) return false;
-
-      // Caso 1: ya viene "YYYY-MM-DD HH:mm:ss"
-      if(typeof fin === "string" && fin.includes(" ")){
-        return fin < nowKey;
-      }
-
-      // Caso 2: ISO
-      const dt = new Date(fin);
-      return dt < now;
+      return fin < now;
     });
 
     window._pastData = past;
@@ -854,7 +914,7 @@ async function loadPasados(){
     console.warn(e);
     pastList.innerHTML = "";
     pastEmpty.classList.remove("hidden");
-    pastEmpty.textContent = "No se pudo cargar Pasados. (Opcional: agregá un webhook agenda-pasados en n8n).";
+    pastEmpty.textContent = "No se pudo cargar Pasados.";
   }
 }
 
@@ -875,7 +935,9 @@ function renderPasados(data){
 
   const groups = new Map();
   for(const t of filtered){
-    const d = formatDateInTZ(new Date(t.fecha_inicio));
+    const s = safeDate(t.fecha_inicio);
+    if(!s) continue;
+    const d = formatDateInTZ(s);
     if(!groups.has(d)) groups.set(d, []);
     groups.get(d).push(t);
   }
@@ -887,9 +949,10 @@ function renderPasados(data){
     card.className = "bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden";
 
     const items = groups.get(d)
-      .sort((a,b)=> new Date(a.fecha_inicio)-new Date(b.fecha_inicio))
+      .sort((a,b)=> safeDate(a.fecha_inicio)-safeDate(b.fecha_inicio))
       .map(t=>{
-        const s = new Date(t.fecha_inicio);
+        const s = safeDate(t.fecha_inicio);
+        if(!s) return "";
         const hh = formatTimeInTZ(s);
         const serv = t.servicio || "A definir";
         const name = t.cliente_nombre || "Sin nombre";
@@ -930,3 +993,4 @@ document.getElementById("fab").addEventListener("click", ()=>openModalCreate());
 </script>
 </body>
 </html>
+```
